@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fresh Mart</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1b2a22;
+    --muted: #5d6e64;
+    --paper: #eef2ec;
+    --card: #ffffff;
+    --leaf: #2f6b4f;
+    --leaf-dark: #214e39;
+    --turmeric: #f2b632;
+    --tomato: #c8402b;
+    --line: #d5ddd3;
+    --head: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+    --body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 var(--body); }
+
+  header { background: var(--leaf); color: #fff; padding: 28px 20px 24px; }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  header h1 { font: 800 clamp(2.2rem, 7vw, 3.6rem)/1 var(--head); margin: 0; letter-spacing: -0.02em; }
+  header p { margin: 8px 0 0; color: #d6ead9; max-width: 46ch; }
+
+  .layout { display: grid; grid-template-columns: 1fr 340px; gap: 24px; padding: 20px; align-items: start; }
+  @media (max-width: 800px) { .layout { grid-template-columns: 1fr; } }
+
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .tabs button { border: 1.5px solid var(--leaf); background: transparent; color: var(--leaf-dark);
+    padding: 7px 14px; border-radius: 999px; font: 600 0.9rem var(--body); cursor: pointer; }
+  .tabs button[aria-pressed="true"] { background: var(--leaf); color: #fff; }
+
+  .list { display: grid; gap: 10px; }
+  .item { background: var(--card); border: 1px solid var(--line); border-left: 6px solid var(--leaf);
+    border-radius: 6px; padding: 12px 14px; display: grid; grid-template-columns: 1fr auto; gap: 6px 14px; align-items: center; }
+  .item[data-type="Beverage"] { border-left-color: var(--turmeric); }
+  .item[data-type="Non-Food"] { border-left-color: var(--tomato); }
+  .item h3 { margin: 0; font: 600 1.05rem var(--head); }
+  .item .info { color: var(--muted); font-size: 0.85rem; }
+  .price { font: 800 1.35rem var(--head); text-align: right; }
+  .stock { font-size: 0.8rem; color: var(--muted); text-align: right; }
+  .stock.low { color: var(--tomato); font-weight: 600; }
+  .buy { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; }
+  .buy input { width: 64px; padding: 7px 8px; border: 1.5px solid var(--line); border-radius: 6px; font: inherit; }
+  .btn { background: var(--leaf); color: #fff; border: 0; border-radius: 6px; padding: 8px 16px; font: 600 0.95rem var(--body); cursor: pointer; }
+  .btn:hover { background: var(--leaf-dark); }
+  .btn:disabled { background: #b8c4bb; cursor: not-allowed; }
+  .btn.pay { background: var(--tomato); width: 100%; padding: 11px; font-size: 1rem; }
+  .btn.pay:hover { background: #a9331f; }
+  :focus-visible { outline: 3px solid var(--turmeric); outline-offset: 2px; }
+
+  aside { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 16px; position: sticky; top: 16px; }
+  @media (max-width: 800px) { aside { position: static; } }
+  aside h2 { margin: 0 0 10px; font: 800 1.4rem var(--head); }
+  .line { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px dashed var(--line); font-size: 0.95rem; }
+  .line span:first-child { color: var(--ink); }
+  .empty { color: var(--muted); padding: 8px 0 12px; }
+  .total { display: flex; justify-content: space-between; font: 800 1.3rem var(--head); padding: 14px 0; }
+  aside label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 4px; }
+  aside input[type="text"] { width: 100%; padding: 9px 10px; border: 1.5px solid var(--line); border-radius: 6px; font: inherit; margin-bottom: 12px; }
+
+  #toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--ink); color: #fff;
+    padding: 10px 18px; border-radius: 6px; font-size: 0.95rem; opacity: 0; pointer-events: none; transition: opacity .2s; max-width: 90vw; z-index: 5; }
+  #toast.show { opacity: 1; }
+  #toast.err { background: var(--tomato); }
+
+  .cartbar { display: none; position: fixed; left: 12px; right: 12px; bottom: 12px; background: var(--ink); color: #fff;
+    padding: 12px 16px; border-radius: 8px; justify-content: space-between; text-decoration: none; font-weight: 600; z-index: 4; }
+  @media (max-width: 800px) { .cartbar { display: flex; } body { padding-bottom: 70px; } }
+
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } #toast { transition: none; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Fresh Mart</h1>
+    <p>Groceries, drinks and household basics. Pick what you need and check out.</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="layout">
+    <main>
+      <div class="tabs" id="tabs" role="group" aria-label="Filter products"></div>
+      <div class="list" id="list"></div>
+    </main>
+
+    <aside id="cart">
+      <h2>Your cart</h2>
+      <div id="lines"></div>
+      <div class="total"><span>Total</span><span id="total">₹0.00</span></div>
+      <label for="name">Your name</label>
+      <input type="text" id="name" placeholder="Guest" autocomplete="name">
+      <button class="btn pay" id="pay">Pay now</button>
+    </aside>
+  </div>
+</div>
+
+<a class="cartbar" href="#cart"><span id="barCount">Cart is empty</span><span id="barTotal">₹0.00</span></a>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+  const TYPES = ["All", "Food", "Beverage", "Non-Food"];
+  let products = [];
+  let filter = "All";
+
+  const rupee = n => "₹" + Number(n).toFixed(2);
+  const $ = id => document.getElementById(id);
+
+  async function api(path, method) {
+    const res = await fetch(path, { method: method || "GET" });
+    return res.json();
+  }
+
+  let toastTimer;
+  function toast(msg, isErr) {
+    const t = $("toast");
+    t.textContent = msg;
+    t.className = "show" + (isErr ? " err" : "");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.className = ""; }, 2600);
+  }
+
+  function renderTabs() {
+    const box = $("tabs");
+    box.textContent = "";
+    TYPES.forEach(t => {
+      const b = document.createElement("button");
+      b.textContent = t;
+      b.setAttribute("aria-pressed", String(t === filter));
+      b.onclick = () => { filter = t; renderTabs(); renderProducts(); };
+      box.appendChild(b);
+    });
+  }
+
+  function renderProducts() {
+    const list = $("list");
+    list.textContent = "";
+    products.filter(p => filter === "All" || p.type === filter).forEach(p => {
+      const row = document.createElement("div");
+      row.className = "item";
+      row.dataset.type = p.type;
+
+      const left = document.createElement("div");
+      const h = document.createElement("h3");
+      h.textContent = p.name;
+      const info = document.createElement("div");
+      info.className = "info";
+      info.textContent = p.type + ": " + p.info;
+      left.append(h, info);
+
+      const right = document.createElement("div");
+      const price = document.createElement("div");
+      price.className = "price";
+      price.textContent = rupee(p.price);
+      const stock = document.createElement("div");
+      stock.className = "stock" + (p.stock > 0 && p.stock <= 10 ? " low" : "");
+      stock.textContent = p.stock > 0 ? p.stock + " in stock" : "Out of stock";
+      right.append(price, stock);
+
+      const buy = document.createElement("div");
+      buy.className = "buy";
+      const qty = document.createElement("input");
+      qty.type = "number"; qty.min = "1"; qty.value = "1";
+      qty.setAttribute("aria-label", "Quantity for " + p.name);
+      const btn = document.createElement("button");
+      btn.className = "btn";
+      btn.textContent = "Add to cart";
+      btn.disabled = p.stock < 1;
+      btn.onclick = () => addToCart(p.id, qty.value);
+      buy.append(qty, btn);
+
+      row.append(left, right, buy);
+      list.appendChild(row);
+    });
+  }
+
+  async function addToCart(id, qty) {
+    const r = await api("/api/add?id=" + id + "&qty=" + encodeURIComponent(qty), "POST");
+    toast(r.message, !r.ok);
+    if (r.ok) loadCart();
+  }
+
+  async function loadCart() {
+    const c = await api("/api/cart");
+    const box = $("lines");
+    box.textContent = "";
+    if (c.items.length === 0) {
+      const e = document.createElement("div");
+      e.className = "empty";
+      e.textContent = "Nothing here yet. Add a product to start.";
+      box.appendChild(e);
+    }
+    let count = 0;
+    c.items.forEach(i => {
+      count += i.qty;
+      const l = document.createElement("div");
+      l.className = "line";
+      const a = document.createElement("span");
+      a.textContent = i.qty + " x " + i.name;
+      const b = document.createElement("span");
+      b.textContent = rupee(i.total);
+      l.append(a, b);
+      box.appendChild(l);
+    });
+    $("total").textContent = rupee(c.total);
+    $("barTotal").textContent = rupee(c.total);
+    $("barCount").textContent = count ? count + (count === 1 ? " item in cart" : " items in cart") : "Cart is empty";
+    $("pay").disabled = c.items.length === 0;
+  }
+
+  $("pay").onclick = async () => {
+    const name = $("name").value;
+    const r = await api("/api/checkout?name=" + encodeURIComponent(name), "POST");
+    if (r.ok) {
+      toast(r.message + " Total paid: " + rupee(r.total));
+      products = await api("/api/products");
+      renderProducts();
+      loadCart();
+    } else {
+      toast(r.message, true);
+    }
+  };
+
+  (async function init() {
+    renderTabs();
+    products = await api("/api/products");
+    renderProducts();
+    loadCart();
+  })();
+</script>
+</body>
+</html>
